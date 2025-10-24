@@ -1,0 +1,1006 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>第五人格监管者计时器 & 天赋推测</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'Inter', 'Helvetica Neue', 'Helvetica', 'Arial', 'sans-serif';
+            background-color: #1a202c; /* slate-900 */
+        }
+        .timer-display {
+            font-family: 'monospace';
+        }
+        .card {
+            background-color: #2d3748; /* slate-800 */
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            transition: all 0.2s ease-in-out;
+        }
+        .card-title {
+            color: #e2e8f0; /* slate-200 */
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            border-bottom: 1px solid #4a5568; /* slate-600 */
+            padding-bottom: 0.5rem;
+        }
+        .btn {
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            color: white;
+            transition: background-color 0.2s;
+            cursor: pointer;
+            border: none;
+            text-align: center;
+        }
+        .btn-primary { background-color: #4f46e5; /* indigo-600 */ }
+        .btn-primary:hover { background-color: #4338ca; /* indigo-700 */ }
+        .btn-secondary { background-color: #4a5568; /* slate-600 */ }
+        .btn-secondary:hover { background-color: #2d3748; /* slate-800 */ }
+        .btn-danger { background-color: #c53030; }
+        .btn-danger:hover { background-color: #9b2c2c; }
+        .btn-small { padding: 0.25rem 0.5rem; font-size: 0.875rem; }
+        .btn-reset { padding: 0.25rem; font-size: 1rem; line-height: 1; width: 2rem; height: 2rem;}
+
+        select {
+            background-color: #4a5568;
+            border: 1px solid #718096;
+            border-radius: 0.5rem;
+            padding: 0.5rem;
+            color: white;
+            width: 100%;
+        }
+
+        /* --- 状态高亮 --- */
+        .inactive {
+            background-color: #4a5568; /* slate-600 */
+            color: #a0aec0; /* slate-400 */
+            opacity: 0.7;
+        }
+        .active {
+            box-shadow: 0 0 15px rgba(255, 255, 255, 0.3);
+            opacity: 1;
+        }
+        .state-high { background-color: #c53030; color: white; }
+        .state-low { background-color: #2b6cb0; color: white; }
+        .state-confirmed { background-color: #2f855a; color: white; }
+        .talent-btn, .skill-btn { position: relative; overflow: hidden; }
+        .state-label {
+            position: absolute; top: 2px; right: 4px; font-size: 0.7rem; font-weight: bold;
+            padding: 0.1rem 0.3rem; border-radius: 0.25rem; background-color: rgba(0,0,0,0.5); color: white;
+        }
+        .highlight-skill { border: 2px solid #f59e0b; box-shadow: 0 0 10px #f59e0b; }
+        .flashing-alert { animation: flash 1s infinite; }
+        @keyframes flash {
+            0%, 100% { background-color: #c53030; } 50% { background-color: #f56565; }
+        }
+        .cellar-point {
+            padding: 0.5rem; border-radius: 9999px; width: 3rem; height: 3rem;
+            display: flex; align-items: center; justify-content: center;
+            font-weight: bold; cursor: pointer; transition: all 0.2s;
+        }
+    </style>
+</head>
+<body class="p-4 sm:p-6 lg:p-8">
+
+    <div class="max-w-7xl mx-auto">
+        <header class="text-center mb-8">
+            <h1 class="text-3xl sm:text-4xl font-bold text-white">第五人格 监管者辅助计时器</h1>
+            <p class="text-gray-400 mt-2">点击按钮开始计时或切换状态</p>
+        </header>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div class="lg:col-span-1 space-y-6">
+                <!-- 计时中心 -->
+                <div class="card">
+                    <h2 class="card-title flex justify-between items-center">
+                        <span>计时中心</span>
+                        <button class="settings-btn" data-modal-section="timers">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400 hover:text-white" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0l-.1.41a1.5 1.5 0 01-2.1 1.44l-.4-.1a1.5 1.5 0 00-1.73 2.3l.28.3a1.5 1.5 0 010 2.1l-.28.3a1.5 1.5 0 001.73 2.3l.4-.1c.78-.2 1.63.16 2.1 1.44l.1.41c.38 1.56 2.6 1.56 2.98 0l.1-.41a1.5 1.5 0 012.1-1.44l.4.1a1.5 1.5 0 001.73-2.3l-.28-.3a1.5 1.5 0 010-2.1l.28-.3a1.5 1.5 0 00-1.73-2.3l-.4.1a1.5 1.5 0 01-2.1-1.44l-.1-.41zM10 13a3 3 0 100-6 3 3 0 000 6z" clip-rule="evenodd" />
+                            </svg>
+                        </button>
+                    </h2>
+                    <div class="p-2 bg-gray-900 rounded-lg text-center mb-4">
+                        <div class="text-gray-400">投降倒计时</div>
+                        <div class="flex items-center justify-center gap-2">
+                            <button id="main-timer-minus2" class="btn btn-secondary btn-small">-2</button>
+                            <button id="main-timer-minus1" class="btn btn-secondary btn-small">-1</button>
+                            <span id="main-timer-display" class="text-4xl font-bold timer-display text-yellow-300">238.0</span>
+                            <button id="main-timer-plus1" class="btn btn-secondary btn-small">+1</button>
+                            <button id="main-timer-plus2" class="btn btn-secondary btn-small">+2</button>
+                        </div>
+                         <div class="text-gray-400 mt-2">全局时间: <span id="global-time-display" class="font-bold text-lg timer-display">00:00</span></div>
+                        <div class="grid grid-cols-2 gap-2 mt-2">
+                             <button id="main-timer-toggle" class="btn btn-primary w-full">开始/暂停</button>
+                             <button id="global-timer-end" class="btn btn-danger w-full">结束</button>
+                        </div>
+                    </div>
+                </div>
+                <!-- 功能一 & 五：对局信息 -->
+                <div class="card">
+                    <h2 class="card-title flex justify-between items-center">
+                        <span>功能一 & 五：对局信息</span>
+                        <button class="settings-btn" data-modal-section="info">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400 hover:text-white" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0l-.1.41a1.5 1.5 0 01-2.1 1.44l-.4-.1a1.5 1.5 0 00-1.73 2.3l.28.3a1.5 1.5 0 010 2.1l-.28.3a1.5 1.5 0 001.73 2.3l.4-.1c.78-.2 1.63.16 2.1 1.44l.1.41c.38 1.56 2.6 1.56 2.98 0l.1-.41a1.5 1.5 0 012.1-1.44l.4.1a1.5 1.5 0 001.73-2.3l-.28-.3a1.5 1.5 0 010-2.1l.28-.3a1.5 1.5 0 00-1.73-2.3l-.4.1a1.5 1.5 0 01-2.1-1.44l-.1-.41zM10 13a3 3 0 100-6 3 3 0 000 6z" clip-rule="evenodd" />
+                            </svg>
+                        </button>
+                    </h2>
+                     <div class="space-y-4">
+                        <div>
+                            <label for="hunter-select" class="block mb-1 font-semibold text-gray-300">监管角色</label>
+                            <select id="hunter-select"></select>
+                        </div>
+                        <div>
+                            <span class="block mb-1 font-semibold text-gray-300">队友身份</span>
+                            <div id="survivor-selects" class="grid grid-cols-2 gap-2">
+                                <!-- Survivor selects will be populated here -->
+                            </div>
+                        </div>
+                        <div class="mt-4">
+                            <span class="block mb-1 font-semibold text-gray-300">OB位</span>
+                            <button id="observer-toggle" class="btn btn-secondary w-full">当前: 无OB</button>
+                        </div>
+                    </div>
+                    <!-- 厂长面板 -->
+                    <div id="panel-factory-director" class="hunter-panel hidden mt-4 space-y-3">
+                         <div class="flex items-center justify-between p-2 bg-gray-700 rounded-lg">
+                            <span class="font-bold">怨魂狱火 (炭火)</span>
+                            <div class="flex items-center gap-2">
+                                <button id="peeper-minus" class="btn btn-secondary btn-small">-1</button>
+                                <span id="peeper-count" class="text-xl font-bold w-8 text-center">0</span>
+                                <button id="peeper-plus" class="btn btn-secondary btn-small">+1</button>
+                            </div>
+                        </div>
+                        <div class="flex flex-col gap-2">
+                             <div class="flex items-center gap-2">
+                                 <button id="resentment-timer-start" class="btn btn-primary w-full">积攒怨愤: <span class="timer-display">30.0</span>s</button>
+                                 <button id="resentment-timer-reset" class="btn btn-secondary btn-reset">↺</button>
+                             </div>
+                             <small class="text-center text-gray-400">追击状态自动计时，每次完成+1炭火</small>
+                        </div>
+                        <div class="grid grid-cols-1 gap-2">
+                            <div class="flex items-center gap-2"><button id="peeper-duration-timer-start" class="btn btn-secondary w-full">炭火持续: <span class="timer-display">25.0</span>s</button><button id="peeper-duration-timer-reset" class="btn btn-secondary btn-reset">↺</button></div>
+                            <div class="flex items-center gap-2"><button id="puppet1-cd-timer-start" class="btn btn-secondary w-full">一娃传送: <span class="timer-display">20.0</span>s</button><button id="puppet1-cd-timer-reset" class="btn btn-secondary btn-reset">↺</button></div>
+                            <div class="flex items-center gap-2"><button id="puppet2-cd-timer-start" class="btn btn-secondary w-full">二娃传送: <span class="timer-display">20.0</span>s</button><button id="puppet2-cd-timer-reset" class="btn btn-secondary btn-reset">↺</button></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 功能二：通用技能计时 -->
+                <div class="card">
+                    <h2 class="card-title flex justify-between items-center">
+                        <span>功能二：通用技能</span>
+                        <button class="settings-btn" data-modal-section="skills">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400 hover:text-white" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0l-.1.41a1.5 1.5 0 01-2.1 1.44l-.4-.1a1.5 1.5 0 00-1.73 2.3l.28.3a1.5 1.5 0 010 2.1l-.28.3a1.5 1.5 0 001.73 2.3l.4-.1c.78-.2 1.63.16 2.1 1.44l.1.41c.38 1.56 2.6 1.56 2.98 0l.1-.41a1.5 1.5 0 012.1-1.44l.4.1a1.5 1.5 0 001.73-2.3l-.28-.3a1.5 1.5 0 010-2.1l.28-.3a1.5 1.5 0 00-1.73-2.3l-.4.1a1.5 1.5 0 01-2.1-1.44l-.1-.41zM10 13a3 3 0 100-6 3 3 0 000 6z" clip-rule="evenodd" />
+                            </svg>
+                        </button>
+                    </h2>
+                    <p class="text-sm text-gray-400 mb-3">点击技能选择概率，底牌解锁后将重置。注意：切换技能的冷却缩减需手动调整。</p>
+                    <div id="skills-grid" class="space-y-3"></div>
+                </div>
+            </div>
+
+            <div class="lg:col-span-2">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- 功能三：天赋推测 -->
+                    <div class="card">
+                        <h2 class="card-title flex justify-between items-center">
+                            <span>功能三：天赋推测</span>
+                            <button class="settings-btn" data-modal-section="talents">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400 hover:text-white" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0l-.1.41a1.5 1.5 0 01-2.1 1.44l-.4-.1a1.5 1.5 0 00-1.73 2.3l.28.3a1.5 1.5 0 010 2.1l-.28.3a1.5 1.5 0 001.73 2.3l.4-.1c.78-.2 1.63.16 2.1 1.44l.1.41c.38 1.56 2.6 1.56 2.98 0l.1-.41a1.5 1.5 0 012.1-1.44l.4.1a1.5 1.5 0 001.73-2.3l-.28-.3a1.5 1.5 0 010-2.1l.28-.3a1.5 1.5 0 00-1.73-2.3l-.4.1a1.5 1.5 0 01-2.1-1.44l-.1-.41zM10 13a3 3 0 100-6 3 3 0 000 6z" clip-rule="evenodd" />
+                                </svg>
+                            </button>
+                        </h2>
+                        <div>
+                            <h3 class="text-lg font-semibold text-gray-300 mb-2">小天赋 / 对局分析</h3>
+                            <div id="small-talents-grid" class="space-y-2"></div>
+                        </div>
+                        <div class="mt-6">
+                            <h3 class="text-lg font-semibold text-gray-300 mb-2">最终天赋</h3>
+                            <div id="final-talents-grid" class="space-y-2"></div>
+                        </div>
+                        <div id="game-alerts" class="mt-4 p-3 bg-gray-900 rounded-lg text-center font-bold">游戏提示</div>
+                    </div>
+                    <!-- 功能四：地图 -->
+                    <div class="card">
+                        <h2 class="card-title flex justify-between items-center">
+                            <span>功能四：地图地窖</span>
+                            <button class="settings-btn" data-modal-section="maps">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400 hover:text-white" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0l-.1.41a1.5 1.5 0 01-2.1 1.44l-.4-.1a1.5 1.5 0 00-1.73 2.3l.28.3a1.5 1.5 0 010 2.1l-.28.3a1.5 1.5 0 001.73 2.3l.4-.1c.78-.2 1.63.16 2.1 1.44l.1.41c.38 1.56 2.6 1.56 2.98 0l.1-.41a1.5 1.5 0 012.1-1.44l.4.1a1.5 1.5 0 001.73-2.3l-.28-.3a1.5 1.5 0 010-2.1l.28-.3a1.5 1.5 0 00-1.73-2.3l-.4.1a1.5 1.5 0 01-2.1-1.44l-.1-.41zM10 13a3 3 0 100-6 3 3 0 000 6z" clip-rule="evenodd" />
+                                </svg>
+                            </button>
+                        </h2>
+                        <div class="space-y-4">
+                            <div>
+                                <label for="map-select" class="block mb-1 font-semibold text-gray-300">选择地图</label>
+                                <select id="map-select"></select>
+                            </div>
+                            <div>
+                                <span class="block mb-1 font-semibold text-gray-300">地窖点位 (点击切换状态)</span>
+                                <div id="cellar-points-container" class="flex flex-wrap gap-4 justify-center pt-2"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div id="settings-modal" class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center p-4 hidden z-50">
+        <div class="card w-full max-w-lg">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="card-title mb-0">自定义设置</h2>
+                <button id="modal-close-btn" class="text-gray-400 hover:text-white text-2xl">&times;</button>
+            </div>
+            <div class="space-y-4">
+                <div>
+                    <label for="setting-main-timer" class="block mb-1 font-semibold text-gray-300">投降倒计时 (s)</label>
+                    <input type="number" id="setting-main-timer" class="w-full p-2 rounded bg-gray-700 text-white" />
+                </div>
+                <!-- 更多设置将在此处添加 -->
+            </div>
+            <div class="mt-6 flex justify-end gap-3">
+                <button id="modal-cancel-btn" class="btn btn-secondary">取消</button>
+                <button id="modal-save-btn" class="btn btn-primary">保存设置</button>
+            </div>
+        </div>
+    </div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+    import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import { getFirestore, doc, getDoc, setDoc, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+document.addEventListener('DOMContentLoaded', () => {
+    // --- Firebase/Auth Globals (provided by environment) ---
+    const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;
+    const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+    const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+
+    // --- 状态与数据中心 ---
+    const defaultConfig = {
+        mainTimerStart: 238
+        // 我们将在此处添加更多可自定义的设置
+    };
+
+    const appState = {
+        selectedHunter: null,
+        peeperCount: 0,
+        mainTimer: { time: 238, isRunning: false, intervalId: null }, // 将从配置中设置
+        globalTimer: { time: 0, isRunning: false, intervalId: null },
+        timers: {},
+        talents: {},
+        skillStates: {},
+        teammates: [null, null, null, null],
+        quenchingAnnounced: false,
+        hasObserver: false,
+        config: JSON.parse(JSON.stringify(defaultConfig)), // 深拷贝
+        db: null,
+        auth: null,
+        userId: null,
+        isAuthReady: false,
+        settingsDocRef: null
+    };
+
+    const speak = (text) => {
+        try {
+            window.speechSynthesis.cancel();
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = 'zh-CN';
+            window.speechSynthesis.speak(utterance);
+        } catch (e) { console.error("Speech synthesis failed.", e); }
+    };
+
+    // --- 数据定义 ---
+    const HUNTER_DATA = {
+        'none': '请选择监管者', 'factory-director': '厂长', 'wu-chang': '宿伞之魂(待补充)', 'naiad': '渔女(待补充)', 'blood-queen': '红夫人(待补充)', 'geisha': '红蝶(待补充)', 'nightmare': '噩梦(待补充)', 'disciple': '使徒(待补充)', 'foolsgold': '愚人金(待补充)'
+    };
+
+    const SURVIVOR_DATA = { 'none': '选择队友', 'doctor': '医生', 'lawyer': '律师', 'thief': '慈善家', 'gardener': '园丁', 'magician': '魔术师', 'explorer': '冒险家', 'mercenary': '佣兵', 'coordinator': '空军', 'mechanic': '机械师', 'forward': '前锋', 'mindseye': '盲女', 'priestess': '祭司', 'perfumer': '调香师', 'cowboy': '牛仔', 'dancer': '舞女', 'seer': '先知', 'embalmer': '入殓师', 'prospector': '勘探员', 'enchantress': '咒术师', 'wildling': '野人', 'acrobat': '杂耍演员', 'first-officer': '大副', 'barmaid': '调酒师', 'postman': '邮差', 'grave-keeper': '守墓人', 'prisoner': '囚徒', 'entomologist': '昆虫学者', 'painter': '画家', 'batter': '击球手', 'toy-merchant': '玩具商', 'patient': '病患', 'psychologist': '心理学家', 'novelist': '小说家', 'little-girl': '小女孩', 'weeping-clown': '哭泣小丑', 'professor': '教授', 'antiquarian': '古董商', 'composer': '作曲家', 'journalist': '记者', 'cheerleader': '啦啦队员' };
+    
+    const MAP_DATA = {
+        'arms-factory': { name: '军工厂', cellars: ['大房', '小房', '废墟'] },
+        'sacred-heart-hospital': { name: '圣心医院', cellars: ['医院', '小房', '女神像'] },
+        'red-church': { name: '红教堂', cellars: ['大教堂', '小教堂', '墓地'] },
+        'lakeside-village': { name: '湖景村', cellars: ['大船', '小船', '玉米地'] },
+        'moonlit-river-park': { name: '月亮河公园', cellars: ['鬼屋', '马戏团', '终点站'] },
+        'leo-s-memory': { name: '里奥的回忆', cellars: ['大房', '小房', '工厂'] },
+        'eversleeping-town': { name: '永眠镇', cellars: ['墓地', '学校', '终点站'] },
+        'chinatown': { name: '唐人街', cellars: ['酒楼', '旅馆', '商铺'] },
+        'darkwoods': { name: '不归林', cellars: ['矿洞', '小屋', '祭坛'] }
+    };
+    
+    const SKILLS_DATA = {};
+    const SMALL_TALENTS_DATA = {};
+    const FINAL_TALENTS_DATA = {};
+    Object.assign(SKILLS_DATA, {
+        'abnormal': { name: '失常', unlockTime: 0, cooldowns: [] },
+        'excitement': { name: '兴奋', unlockTime: 0, cooldowns: [{ id: 'excitement-5s', duration: 5, label: '金身持续' }, { id: 'excitement-100s', duration: 100, label: '兴奋冷却' }] },
+        'patroller': { name: '巡视者', unlockTime: 208, cooldowns: [] },
+        'teleport': { name: '传送', unlockTime: 193, cooldowns: [{ id: 'teleport-100s', duration: 100, label: '传送冷却' }] },
+        'peepers': { name: '窥视者', unlockTime: null, cooldowns: [] },
+        'blink': { name: '闪现', unlockTime: 178, cooldowns: [{ id: 'blink-150s', duration: 150, label: '闪现冷却' }] },
+        'warp': { name: '移形', unlockTime: 188, cooldowns: [{ id: 'warp-30s', duration: 30, label: '移形持续' }, { id: 'warp-100s', duration: 100, label: '移形冷却' }] },
+    });
+    Object.assign(SMALL_TALENTS_DATA, {
+        'destructiveness': { name: '破坏欲', type: 'counter', max: 3 }, 'window_chase': { name: '先追窗区', type: 'toggle' }, 'struggle': { name: '困兽之斗', type: 'toggle' }, 'addiction': { name: '成瘾症', type: 'toggle' }, 'claustrophobia': { name: '幽闭恐惧', type: 'toggle' }, 'quenching': { name: '淬火', type: 'info' }, 'wanted_order': { name: '通缉', type: 'counter', max: 3 }, 'control_freak': { name: '掌控欲', type: 'toggle' }, 'hunt': { name: '追猎', type: 'counter', max: 3 }, 'hunting_instinct': { name: '狩猎本能', type: 'counter', max: 3 }, 'rage': { name: '狂暴', type: 'toggle' }, 'mock': { name: '嬉弄', type: 'toggle' },
+    });
+     Object.assign(FINAL_TALENTS_DATA, {
+        'detention': { name: '禁闭空间', type: 'toggle', cooldown: { id: 'detention-20s', duration: 20, label: '窗户解封' } },
+        'insolence': { name: '张狂', type: 'toggle' }, 'trump_card': { name: '底牌', type: 'info' },
+        'final_hope': { name: '挽留', type: 'toggle', cooldown: { id: 'final_hope-120s', duration: 120, label: '挽留持续' } },
+    });
+
+    // --- 动态UI生成 ---
+    function populateSelect(selectId, data, isGrouped = false) {
+        const select = document.getElementById(selectId);
+        select.innerHTML = '';
+        Object.entries(data).forEach(([key, value]) => {
+            select.innerHTML += `<option value="${key}" ${key.includes('none') || key.includes('wait') ? 'disabled selected' : ''}>${value}</option>`;
+        });
+    }
+
+    function createSurvivorSelects() {
+        const container = document.getElementById('survivor-selects');
+        container.innerHTML = '';
+        for (let i = 0; i < 4; i++) {
+            const select = document.createElement('select');
+            select.id = `survivor-select-${i}`;
+            select.dataset.index = i;
+            Object.entries(SURVIVOR_DATA).forEach(([key, value]) => {
+                select.innerHTML += `<option value="${key}">${value}</option>`;
+            });
+            container.appendChild(select);
+        }
+    }
+
+    function createSkillElements() {
+        const container = document.getElementById('skills-grid');
+        container.innerHTML = '';
+        Object.keys(SKILLS_DATA).forEach(key => {
+            appState.skillStates[key] = { state: 'default' };
+            const skill = SKILLS_DATA[key];
+            if (skill.unlockTime === null) { /* ... handling for incomplete skills ... */ return; }
+            
+            let cooldownButtons = '';
+            if (skill.cooldowns.length > 0) {
+                cooldownButtons = `<div class="grid grid-cols-${skill.cooldowns.length} gap-2 mt-2">` +
+                skill.cooldowns.map(cd => 
+                    `<div class="flex items-center gap-1 w-full"><button id="${cd.id}-start" class="btn btn-secondary btn-small w-full">${cd.label}: <span class="timer-display">${cd.duration.toFixed(1)}</span>s</button><button id="${cd.id}-reset" class="btn btn-secondary btn-reset btn-small">↺</button></div>`
+                ).join('') + `</div>`;
+            }
+
+            container.innerHTML += `
+                <div id="skill-${key}" data-skill-key="${key}" class="skill-btn p-3 rounded-lg inactive transition-all duration-300 cursor-pointer">
+                    <div class="flex justify-between items-center">
+                        <span class="font-bold pointer-events-none">${skill.name}</span>
+                        <span class="text-sm font-semibold pointer-events-none">${skill.unlockTime > 0 ? `全局: ${skill.unlockTime}s` : `开局解锁`}</span>
+                    </div>
+                    ${cooldownButtons}
+                    <span id="skill-${key}-label" class="state-label hidden"></span>
+                </div>`;
+        });
+    }
+    
+    function renderCellarPoints(mapId) {
+        const container = document.getElementById('cellar-points-container');
+        container.innerHTML = '';
+        const map = MAP_DATA[mapId];
+        if (!map || !map.cellars) return;
+
+        map.cellars.forEach((cellarName, index) => {
+            container.innerHTML += `
+                <div data-cellar-name="${cellarName}" class="cellar-point inactive bg-gray-600">${cellarName}</div>
+            `;
+        });
+    }
+
+    function createTalentElements() {
+        const smallContainer = document.getElementById('small-talents-grid');
+        const finalContainer = document.getElementById('final-talents-grid');
+        smallContainer.innerHTML = '';
+        finalContainer.innerHTML = '';
+
+        Object.keys(SMALL_TALENTS_DATA).forEach(key => {
+            const talent = SMALL_TALENTS_DATA[key];
+            appState.talents[key] = talent.type === 'counter' ? 0 : { state: 'default' };
+            if (talent.type === 'info') return;
+
+            let element = '';
+            if (talent.type === 'counter') {
+                element = `<div id="talent-${key}" class="talent-btn p-3 rounded-lg active flex justify-between items-center cursor-pointer bg-gray-600">
+                    <span class="font-bold">${talent.name}</span>
+                    <span id="talent-${key}-count" class="font-bold text-lg">0/${talent.max}</span>
+                </div>`;
+            } else {
+                 element = `<div id="talent-${key}" class="talent-btn p-3 rounded-lg inactive text-center font-bold cursor-pointer">
+                    ${talent.name}
+                    <span id="talent-${key}-label" class="state-label hidden"></span>
+                </div>`;
+            }
+            smallContainer.innerHTML += element;
+        });
+
+        Object.keys(FINAL_TALENTS_DATA).forEach(key => {
+            const talent = FINAL_TALENTS_DATA[key];
+            appState.talents[key] = { state: 'default' };
+            if (talent.type === 'info') return;
+
+            let cooldownButtonHTML = '';
+            if (talent.cooldown) {
+                cooldownButtonHTML = `
+                <div id="${talent.cooldown.id}-container" class="mt-2 hidden">
+                    <div class="flex items-center gap-1 w-full">
+                        <button id="${talent.cooldown.id}-start" class="btn btn-secondary btn-small w-full">${talent.cooldown.label}: <span class="timer-display">${talent.cooldown.duration.toFixed(1)}</span>s</button>
+                        <button id="${talent.cooldown.id}-reset" class="btn btn-secondary btn-reset btn-small">↺</button>
+                    </div>
+                </div>`;
+            }
+
+            let element = `<div id="talent-${key}" class="talent-btn p-3 rounded-lg inactive text-center font-bold cursor-pointer">
+                ${talent.name}
+                <span id="talent-${key}-label" class="state-label hidden"></span>
+                ${cooldownButtonHTML}
+            </div>`;
+            finalContainer.innerHTML += element;
+        });
+    }
+
+    // --- 计时器核心逻辑 ---
+    const createTimer = (id, duration, displayEl, onEnd = null) => {
+        appState.timers[id] = { initial: duration, remaining: duration, isRunning: false, intervalId: null, display: displayEl, onEndCallback: onEnd };
+    };
+    const startTimer = (id) => {
+        const timer = appState.timers[id];
+        if (!timer || timer.isRunning) return;
+        timer.isRunning = true;
+        timer.intervalId = setInterval(() => {
+            timer.remaining -= 0.1;
+            if (timer.remaining <= 0) stopTimer(id, true);
+        }, 100);
+        const startButton = document.getElementById(`${id}-start`);
+        if(startButton) {
+            startButton.classList.add('active');
+            startButton.classList.remove('inactive');
+        }
+    };
+    const stopTimer = (id, ended = false) => {
+        const timer = appState.timers[id];
+        if (!timer || !timer.isRunning) return;
+        clearInterval(timer.intervalId);
+        timer.isRunning = false;
+        if (ended) {
+            timer.remaining = 0;
+            if (timer.onEndCallback) timer.onEndCallback();
+            const startButton = document.getElementById(`${id}-start`);
+            if(startButton) {
+                startButton.classList.add('flashing-alert');
+                setTimeout(() => {
+                    resetTimer(id);
+                    startButton.classList.remove('flashing-alert');
+                }, 3000);
+            }
+        } else {
+             resetTimer(id);
+        }
+    };
+    const resetTimer = (id) => {
+        const timer = appState.timers[id];
+        if(!timer) return;
+        clearInterval(timer.intervalId);
+        timer.isRunning = false;
+        timer.remaining = timer.initial;
+        if(timer.display) timer.display.textContent = timer.initial.toFixed(1);
+        const startButton = document.getElementById(`${id}-start`);
+        if (startButton) {
+            startButton.classList.remove('active', 'flashing-alert');
+            startButton.classList.add('inactive');
+        }
+    };
+     const mainTimerTick = () => {
+        appState.mainTimer.time -= 0.1;
+        if (appState.mainTimer.time <= 0) {
+            appState.mainTimer.time = 0;
+            toggleMainTimer();
+        }
+        updateMainTimerDisplay();
+        checkMainTimerEvents();
+    };
+
+
+    const toggleMainTimer = () => {
+        const button = document.getElementById('main-timer-toggle');
+        appState.mainTimer.isRunning = !appState.mainTimer.isRunning;
+        if (appState.mainTimer.isRunning) {
+            appState.mainTimer.intervalId = setInterval(mainTimerTick, 100);
+            button.textContent = '暂停';
+            button.classList.remove('btn-primary');
+            button.classList.add('btn-secondary');
+            if (!appState.globalTimer.isRunning) startGlobalTimer();
+        } else {
+            clearInterval(appState.mainTimer.intervalId);
+            button.textContent = '开始';
+            button.classList.add('btn-primary');
+            button.classList.remove('btn-secondary');
+        }
+    };
+    
+    const startGlobalTimer = () => {
+        if (appState.globalTimer.isRunning) return;
+        appState.globalTimer.isRunning = true;
+        appState.globalTimer.intervalId = setInterval(() => {
+            appState.globalTimer.time += 1;
+            updateGlobalTimerDisplay();
+        }, 1000);
+    };
+
+    const stopGlobalTimer = () => {
+        clearInterval(appState.globalTimer.intervalId);
+        appState.globalTimer.isRunning = false;
+    };
+    
+    const endAndResetAll = () => {
+        stopGlobalTimer();
+        if (appState.mainTimer.isRunning) toggleMainTimer();
+        appState.globalTimer.time = 0;
+        appState.mainTimer.time = 238;
+        updateGlobalTimerDisplay();
+        updateMainTimerDisplay();
+        Object.keys(appState.timers).forEach(resetTimer);
+    }
+    
+    const adjustMainTimer = (amount) => {
+        appState.mainTimer.time += amount;
+        if (appState.mainTimer.time < 0) appState.mainTimer.time = 0;
+        updateMainTimerDisplay();
+    };
+
+    // --- 渲染与更新 ---
+    const updateMainTimerDisplay = () => {
+        document.getElementById('main-timer-display').textContent = appState.mainTimer.time.toFixed(1);
+    };
+    const updateGlobalTimerDisplay = () => {
+        const time = appState.globalTimer.time;
+        const minutes = Math.floor(time / 60).toString().padStart(2, '0');
+        const seconds = (time % 60).toString().padStart(2, '0');
+        document.getElementById('global-time-display').textContent = `${minutes}:${seconds}`;
+    };
+    const updateAllTimerDisplays = () => {
+        Object.values(appState.timers).forEach(timer => {
+            if(timer.display) {
+                timer.display.textContent = timer.remaining > 0 ? timer.remaining.toFixed(1) : '0.0';
+            }
+        });
+    };
+
+    const updateSkillStatesUI = () => {
+        const hasConfirmed = Object.values(appState.skillStates).some(s => s.state === 'confirmed');
+        Object.keys(appState.skillStates).forEach(key => {
+            const el = document.getElementById(`skill-${key}`);
+            if (!el) return;
+            const state = appState.skillStates[key].state;
+            el.classList.remove('state-high', 'state-low', 'state-confirmed', 'opacity-50');
+            const labelEl = document.getElementById(`skill-${key}-label`);
+            if (labelEl) labelEl.classList.add('hidden'); // Check if labelEl exists
+
+            if (hasConfirmed && state !== 'confirmed') {
+                el.classList.add('opacity-50');
+            } else if (state !== 'default') {
+                if (labelEl) { // Check if labelEl exists
+                    labelEl.classList.remove('hidden');
+                    if (state === 'high') { el.classList.add('state-high'); labelEl.textContent = '高概率'; }
+                    else if (state === 'low') { el.classList.add('state-low'); labelEl.textContent = '低概率'; }
+                    else if (state === 'confirmed') { el.classList.add('state-confirmed'); labelEl.textContent = '已确认'; }
+                }
+            }
+        });
+    };
+
+    const checkMainTimerEvents = () => {
+        const time = appState.mainTimer.time;
+        const gameAlerts = document.getElementById('game-alerts');
+
+        Object.keys(SKILLS_DATA).forEach(key => {
+            const skill = SKILLS_DATA[key];
+            const skillEl = document.getElementById(`skill-${key}`);
+            if (skill.unlockTime && time <= skill.unlockTime && skillEl.classList.contains('inactive')) {
+                skillEl.classList.remove('inactive');
+                skillEl.classList.add('active', 'bg-green-800');
+                speak(`${skill.name}冷却结束`);
+            }
+        });
+        
+        // 淬火事件
+        if (!appState.quenchingAnnounced && Math.abs(time - 189) < 0.1 && appState.teammates.includes('mindseye')) {
+            gameAlerts.textContent = '盲杖可能废除淬火天赋';
+            speak('盲杖废淬火');
+            appState.quenchingAnnounced = true;
+        } 
+        // 底牌事件
+        else if (Math.abs(time - 118) < 0.1) {
+            gameAlerts.textContent = '底牌冷却结束';
+            speak('底牌冷却结束');
+            // Reset skill states
+            Object.keys(appState.skillStates).forEach(key => appState.skillStates[key].state = 'default');
+            updateSkillStatesUI();
+        }
+    };
+    
+    // 天赋逻辑等其他函数...
+    const updatePeeperCount = () => {
+        document.getElementById('peeper-count').textContent = appState.peeperCount;
+    };
+    
+    const checkTalentDependencies = () => {
+        // 用户将在未来提供新的算法逻辑
+    };
+
+    const setTalentState = (key, state) => {
+        if (!appState.talents[key]) return;
+        appState.talents[key].state = state;
+        updateTalentUI();
+    };
+
+    const updateTalentUI = () => {
+        Object.keys(appState.talents).forEach(key => {
+            const talentData = SMALL_TALENTS_DATA[key] || FINAL_TALENTS_DATA[key];
+            if (!talentData) return;
+
+            const talentState = appState.talents[key];
+            const el = document.getElementById(`talent-${key}`);
+            if (!el) return;
+
+            el.classList.remove('state-high', 'state-low', 'state-confirmed', 'inactive', 'active', 'bg-gray-600');
+            const labelEl = document.getElementById(`talent-${key}-label`);
+            
+            if (talentData.type === 'counter') {
+                el.classList.add('active', 'bg-gray-600'); 
+            } else if (talentState.state === 'default') {
+                el.classList.add('inactive');
+                if (labelEl) labelEl.classList.add('hidden');
+            } else {
+                el.classList.add('active');
+                if (labelEl) {
+                    labelEl.classList.remove('hidden');
+                    if (talentState.state === 'high') { el.classList.add('state-high'); labelEl.textContent = '高概率'; } 
+                    else if (talentState.state === 'low') { el.classList.add('state-low'); labelEl.textContent = '低概率'; } 
+                    else if (talentState.state === 'confirmed') { el.classList.add('state-confirmed'); labelEl.textContent = '已确认'; }
+                }
+            }
+            
+            if (talentData.cooldown) {
+                const cdContainer = document.getElementById(`${talentData.cooldown.id}-container`);
+                if (cdContainer) {
+                    if (talentState.state === 'confirmed') cdContainer.classList.remove('hidden');
+                    else cdContainer.classList.add('hidden');
+                }
+            }
+        });
+    };
+
+    const updateHunterHighlights = () => {
+        // 清除所有高亮
+        document.querySelectorAll('.highlight-skill').forEach(el => el.classList.remove('highlight-skill'));
+
+        if (appState.selectedHunter === 'factory-director') {
+            document.getElementById('skill-blink')?.classList.add('highlight-skill');
+            document.getElementById('skill-warp')?.classList.add('highlight-skill');
+            document.getElementById('skill-teleport')?.classList.add('highlight-skill');
+            document.getElementById('talent-hunt')?.classList.add('highlight-skill');
+        } else if (appState.selectedHunter === 'nightmare') {
+            // ...其他监管者的逻辑
+        }
+    };
+    
+    // --- NEW: Settings Modal Logic ---
+    const modal = document.getElementById('settings-modal');
+    const openModal = () => {
+        // 将当前配置加载到模态框字段中
+        document.getElementById('setting-main-timer').value = appState.config.mainTimerStart;
+        modal.classList.remove('hidden');
+    };
+    const closeModal = () => {
+        modal.classList.add('hidden');
+    };
+    const saveSettings = async () => {
+        try {
+            // 从模态框读取值
+            const newMainTimerStart = parseFloat(document.getElementById('setting-main-timer').value);
+            
+            // 更新 appState.config
+            appState.config.mainTimerStart = newMainTimerStart;
+
+            // 保存到 Firestore
+            if (appState.settingsDocRef) {
+                await setDoc(appState.settingsDocRef, appState.config);
+                console.log("Settings saved to Firestore");
+            }
+            
+            closeModal();
+            
+            // 使用新设置重新加载应用UI
+            // 这是应用逻辑的“硬重载”
+            endAndResetAll(); // 重置计时器
+            appState.mainTimer.time = appState.config.mainTimerStart; // 应用新配置
+            updateMainTimerDisplay();
+            // 在更完整的实现中，我们将重建依赖于配置的计时器
+            
+        } catch (e) {
+            console.error("Error saving settings: ", e);
+        }
+    };
+    
+    // --- NEW: Settings Load Logic ---
+    const loadSettings = async () => {
+        if (!appState.settingsDocRef) return;
+        try {
+            const docSnap = await getDoc(appState.settingsDocRef);
+            if (docSnap.exists()) {
+                // 合并保存的设置与默认设置（以防添加了新的默认设置）
+                appState.config = { ...defaultConfig, ...docSnap.data() };
+                console.log("Loaded settings from Firestore:", appState.config);
+            } else {
+                console.log("No custom settings found, using defaults.");
+                appState.config = JSON.parse(JSON.stringify(defaultConfig));
+            }
+        } catch (e) {
+            console.error("Error loading settings: ", e);
+            appState.config = JSON.parse(JSON.stringify(defaultConfig));
+        }
+        
+        // 应用加载的设置
+        appState.mainTimer.time = appState.config.mainTimerStart;
+    };
+
+
+    // --- 事件监听与绑定 ---
+    const attachEventListeners = () => {
+        // 计时器按钮
+        document.getElementById('main-timer-toggle').addEventListener('click', toggleMainTimer);
+        document.getElementById('main-timer-plus1').addEventListener('click', () => adjustMainTimer(1));
+        document.getElementById('main-timer-plus2').addEventListener('click', () => adjustMainTimer(2));
+        document.getElementById('main-timer-minus1').addEventListener('click', () => adjustMainTimer(-1));
+        document.getElementById('main-timer-minus2').addEventListener('click', () => adjustMainTimer(-2));
+        document.getElementById('global-timer-end').addEventListener('click', endAndResetAll);
+
+        // 监管者/地图/队友 选择
+        document.getElementById('hunter-select').addEventListener('change', e => {
+            appState.selectedHunter = e.target.value;
+            document.querySelectorAll('.hunter-panel').forEach(p => p.classList.add('hidden'));
+            if(appState.selectedHunter === 'factory-director') {
+                document.getElementById('panel-factory-director').classList.remove('hidden');
+            }
+            updateHunterHighlights();
+        });
+        document.getElementById('map-select').addEventListener('change', e => renderCellarPoints(e.target.value));
+        document.getElementById('survivor-selects').addEventListener('change', e => {
+            if (e.target.dataset.index) {
+                const index = parseInt(e.target.dataset.index, 10);
+                appState.teammates[index] = e.target.value;
+            }
+        });
+        
+        document.getElementById('observer-toggle').addEventListener('click', e => {
+            appState.hasObserver = !appState.hasObserver;
+            e.target.textContent = `当前: ${appState.hasObserver ? '有OB' : '无OB'}`;
+            e.target.classList.toggle('btn-secondary');
+            e.target.classList.toggle('btn-primary');
+        });
+
+        // 技能状态点击
+        document.getElementById('skills-grid').addEventListener('click', e => {
+            const target = e.target.closest('.skill-btn');
+            if (e.target.closest('button')) return; // ignore clicks on timer buttons
+            if (!target) return;
+
+            const skillKey = target.dataset.skillKey;
+            const states = ['default', 'high', 'low', 'confirmed'];
+            const currentStateIndex = states.indexOf(appState.skillStates[skillKey].state);
+            const nextState = states[(currentStateIndex + 1) % states.length];
+            appState.skillStates[skillKey].state = nextState;
+            updateSkillStatesUI();
+        });
+
+        // 地窖点点击
+        document.getElementById('cellar-points-container').addEventListener('click', e => {
+            const target = e.target.closest('.cellar-point');
+            if(!target) return;
+            
+            const isConfirmed = target.classList.contains('state-confirmed');
+            document.querySelectorAll('.cellar-point').forEach(el => el.className = 'cellar-point inactive bg-gray-600');
+            
+            if(!isConfirmed) {
+                target.className = 'cellar-point state-confirmed';
+            }
+        });
+
+        // 天赋点击
+        document.querySelector('.card:has(#small-talents-grid)').addEventListener('click', e => {
+            const target = e.target.closest('.talent-btn');
+            if (!target || e.target.closest('button')) return;
+
+            const talentId = target.id.replace('talent-', '');
+            const talentState = appState.talents[talentId];
+            const talentData = SMALL_TALENTS_DATA[talentId] || FINAL_TALENTS_DATA[talentId];
+
+            if (!talentData) return;
+
+            if (talentData.type === 'counter') {
+                appState.talents[talentId] = (talentState + 1) % (talentData.max + 1);
+                document.getElementById(`talent-${talentId}-count`).textContent = `${appState.talents[talentId]}/${talentData.max}`;
+            } else if (talentData.type === 'toggle') {
+                const states = ['default', 'high', 'low', 'confirmed'];
+                const currentStateIndex = states.indexOf(talentState.state);
+                const nextState = states[(currentStateIndex + 1) % states.length];
+                appState.talents[talentId].state = nextState;
+            }
+            
+            updateTalentUI();
+            checkTalentDependencies();
+        });
+
+
+        // 重置按钮
+        Object.keys(appState.timers).forEach(id => {
+            const resetButton = document.getElementById(`${id}-reset`);
+            if(resetButton) resetButton.addEventListener('click', (e) => {
+                e.stopPropagation();
+                resetTimer(id);
+            });
+        });
+
+        // 厂长技能
+        document.getElementById('peeper-plus').addEventListener('click', () => {
+            appState.peeperCount++;
+            updatePeeperCount();
+        });
+        document.getElementById('peeper-minus').addEventListener('click', () => {
+            if (appState.peeperCount > 0) {
+                appState.peeperCount--;
+                updatePeeperCount();
+                startTimer('peeper-duration-timer');
+            }
+        });
+        document.getElementById('resentment-timer-start').addEventListener('click', () => startTimer('resentment-timer'));
+        document.getElementById('peeper-duration-timer-start').addEventListener('click', () => startTimer('peeper-duration-timer'));
+        document.getElementById('puppet1-cd-timer-start').addEventListener('click', () => startTimer('puppet1-cd-timer'));
+        document.getElementById('puppet2-cd-timer-start').addEventListener('click', () => startTimer('puppet2-cd-timer'));
+
+        // 通用技能计时器
+        Object.keys(SKILLS_DATA).forEach(key => {
+            const skill = SKILLS_DATA[key];
+            skill.cooldowns.forEach(cd => {
+                document.getElementById(`${cd.id}-start`)?.addEventListener('click', (e) => {
+                     e.stopPropagation();
+                     startTimer(cd.id);
+                });
+            });
+        });
+        
+        // 最终天赋里的计时器按钮
+        Object.keys(FINAL_TALENTS_DATA).forEach(key => {
+            const talent = FINAL_TALENTS_DATA[key];
+            if (talent.cooldown) {
+                 document.getElementById(`${talent.cooldown.id}-start`)?.addEventListener('click', (e) => {
+                     e.stopPropagation(); // 防止触发父级天赋状态切换
+                     startTimer(talent.cooldown.id);
+                 });
+            }
+        });
+        
+        // Modal listeners
+        document.querySelectorAll('.settings-btn').forEach(btn => btn.addEventListener('click', openModal));
+        document.getElementById('modal-close-btn').addEventListener('click', closeModal);
+        document.getElementById('modal-cancel-btn').addEventListener('click', closeModal);
+        document.getElementById('modal-save-btn').addEventListener('click', saveSettings);
+    };
+
+    // --- 
+    const initAppLogic = () => {
+        // 1. 生成UI
+        populateSelect('hunter-select', HUNTER_DATA);
+        createSurvivorSelects();
+        populateSelect('map-select', Object.fromEntries(Object.entries(MAP_DATA).map(([k,v]) => [k,v.name])));
+        createSkillElements();
+        createTalentElements();
+        renderCellarPoints(document.getElementById('map-select').value);
+
+        // 2. 创建计时器 (现在使用配置)
+        // 厂长
+        createTimer('resentment-timer', 30, document.querySelector('#resentment-timer-start span'), () => { speak(`怨愤积攒完毕`); appState.peeperCount++; updatePeeperCount(); startTimer('resentment-timer'); }); // TODO: 将 30 更新为使用 config
+        createTimer('peeper-duration-timer', 25, document.querySelector('#peeper-duration-timer-start span'), () => speak('炭火持续结束')); // TODO: 将 25 更新为使用 config
+        createTimer('puppet1-cd-timer', 20, document.querySelector('#puppet1-cd-timer-start span'), () => speak('一娃传送冷却结束')); // TODO: 将 20 更新为使用 config
+        createTimer('puppet2-cd-timer', 20, document.querySelector('#puppet2-cd-timer-start span'), () => speak('二娃传送冷却结束')); // TODO: 将 20 更新为使用 config
+        // 通用技能
+        Object.values(SKILLS_DATA).forEach(skill => {
+            skill.cooldowns.forEach(cd => {
+                const onEndMessage = cd.id.includes('30s') || cd.id.includes('5s') ? `${skill.name}持续结束` : `${skill.name}冷却结束`;
+                createTimer(cd.id, cd.duration, document.querySelector(`#${cd.id}-start span`), () => speak(onEndMessage));
+            });
+        });
+        // 最终天赋
+        Object.values(FINAL_TALENTS_DATA).forEach(talent => { 
+            if (talent.cooldown) {
+                createTimer(
+                    talent.cooldown.id, 
+                    talent.cooldown.duration, 
+                    document.querySelector(`#${talent.cooldown.id}-start span`),
+                    () => speak(`${talent.name}倒计时结束`)
+                ); 
+            }
+        });
+
+        // 3. 绑定事件
+        attachEventListeners();
+        
+        // 4. 全局更新
+        setInterval(() => updateAllTimerDisplays(), 100);
+        
+        // 5. 默认渲染
+        updateMainTimerDisplay(); // 确保加载了正确的计时器时间
+        updateTalentUI();
+        updateSkillStatesUI();
+    };
+
+    // --- NEW: Firebase Initialization (Main entry point) ---
+    if (!firebaseConfig) {
+        console.error("Firebase config is missing. Persistence will not work.");
+        // 在离线/本地模式下运行应用
+        appState.mainTimer.time = appState.config.mainTimerStart;
+        initAppLogic();
+    } else {
+        try {
+            const app = initializeApp(firebaseConfig);
+            appState.auth = getAuth(app);
+            appState.db = getFirestore(app);
+            setLogLevel('debug'); // 开发期间使用
+
+            onAuthStateChanged(appState.auth, async (user) => {
+                if (user) {
+                    appState.userId = user.uid;
+                    console.log("User authenticated with UID:", appState.userId);
+                    
+                    // 定义用户的设置文档路径
+                    appState.settingsDocRef = doc(appState.db, 'artifacts', appId, 'users', appState.userId, 'd5-settings', 'userConfig');
+                    
+                    // 加载设置 *然后* 初始化应用
+                    await loadSettings();
+                    
+                    if (!appState.isAuthReady) {
+                        appState.isAuthReady = true;
+                        initAppLogic(); // <-- 这是主要的应用启动点
+                    }
+                } else {
+                    // 没有用户，登录
+                    console.log("No user found, signing in...");
+                    if (initialAuthToken) {
+                        await signInWithCustomToken(appState.auth, initialAuthToken);
+                    } else {
+                        await signInAnonymously(appState.auth);
+                    }
+                }
+            });
+        } catch (e) {
+            console.error("Firebase initialization failed:", e);
+            // 如果 Firebase 失败，则在离线模式下运行
+            appState.mainTimer.time = appState.config.mainTimerStart;
+            initAppLogic();
+        }
+    }
+});
+</script>
+
+</body>
+</html>
+
