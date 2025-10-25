@@ -1,564 +1,209 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Identity V — 多功能监管计时器（可直接打开）</title>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>第五人格监管者倒计时面板 v3</title>
 <style>
-:root{
-  --bg:#0f1724; --panel:#0b1220; --muted:#6b7280; --accent:#ffd166; --good:#9ae6b4; --danger:#ff7b7b;
-}
-*{box-sizing:border-box}
-html,body{height:100%;margin:0;font-family:Inter, "Microsoft YaHei", Helvetica, Arial;background:linear-gradient(180deg,#071024 0%,#07182a 100%);color:#e6eef8}
-.container{padding:12px;max-width:1200px;margin:0 auto;display:grid;grid-template-columns:1fr 360px;gap:12px}
-.header{grid-column:1/-1;display:flex;gap:12px;align-items:center}
-.card{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));padding:12px;border-radius:8px;box-shadow:0 6px 18px rgba(0,0,0,0.6);}
-.h1{font-size:18px;font-weight:700}
-.controls{display:flex;gap:8px;flex-wrap:wrap}
-.select,button{background:transparent;border:1px solid rgba(255,255,255,0.06);padding:8px;border-radius:6px;color:inherit}
-.main{display:grid;grid-template-rows:auto 1fr;gap:12px}
-.timers{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
-.timer{padding:10px;border-radius:8px;display:flex;flex-direction:column;gap:8px;align-items:center}
-.timer .label{font-size:13px}
-.timer .count{font-size:28px;font-weight:700}
-.row{display:flex;gap:6px;width:100%}
-.btn{flex:1;padding:8px;border-radius:6px;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.03);cursor:pointer}
-.small{padding:6px;font-size:13px}
-.gray{opacity:0.45;filter:grayscale(80%)}
-.highlight{box-shadow:0 8px 30px rgba(255,209,102,0.12);border:1px solid rgba(255,209,102,0.18)}
-.side{display:flex;flex-direction:column;gap:12px}
-.panel-title{display:flex;justify-content:space-between;align-items:center}
-.legend{display:flex;gap:8px;align-items:center}
-.legend .sw{width:12px;height:12px;border-radius:3px}
-.states{display:grid;grid-template-columns:repeat(2,1fr);gap:6px}
-.tag{padding:6px;border-radius:6px;border:1px solid rgba(255,255,255,0.04);text-align:center}
-.map-list{display:flex;flex-direction:column;gap:6px;max-height:200px;overflow:auto}
-.map-item{display:flex;justify-content:space-between;padding:8px;border-radius:6px}
-.custom{font-size:12px;color:var(--muted)}
-.topbar{display:flex;gap:8px;align-items:center}
-.footer-note{font-size:12px;color:var(--muted);margin-top:6px}
-.badge{padding:4px 8px;border-radius:999px;background:rgba(255,255,255,0.03);font-size:12px}
-.counter{display:inline-block;padding:4px 8px;border-radius:6px;background:rgba(0,0,0,0.25)}
+  body {
+    font-family: "Segoe UI", "Microsoft YaHei", sans-serif;
+    background: #fff;
+    color: #111;
+    margin: 0;
+    padding: 0;
+  }
+  header {
+    background: #f3f3f3;
+    border-bottom: 1px solid #ddd;
+    padding: 10px 20px;
+    text-align: center;
+  }
+  h1 {
+    margin: 0;
+    font-size: 20px;
+  }
+  .container {
+    padding: 10px 20px;
+  }
+  .module {
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    padding: 15px;
+    margin-bottom: 20px;
+    background: #fafafa;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  }
+  .module h2 {
+    margin-top: 0;
+    font-size: 16px;
+  }
+  .timer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin: 5px 0;
+  }
+  .timer input {
+    width: 50px;
+  }
+  button {
+    border: none;
+    background: #4a90e2;
+    color: white;
+    padding: 6px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+  }
+  button:hover { background: #357ab8; }
+  .small { font-size: 12px; color: #666; }
+  .highlight { color: #e74c3c; font-weight: bold; }
+  .gray { color: #aaa; }
+  .settings {
+    text-align: right;
+  }
+  .settings button {
+    background: #aaa;
+    padding: 4px 8px;
+    font-size: 12px;
+  }
 </style>
 </head>
 <body>
+<header>
+  <h1>第五人格监管者倒计时面板 v3</h1>
+  <div class="small">白底简洁风格・自定义可保存・语音播报版</div>
+</header>
+
 <div class="container">
-  <div class="header card">
-    <div style="flex:1">
-      <div class="h1">Identity V — 多功能监管计时器</div>
-      <div class="custom">快捷语音输入 + 语音播报 · 本地储存自定义 · 手机/桌面自适应</div>
+  <!-- 功能一：监管者选择 -->
+  <div class="module" id="module1">
+    <div class="settings"><button onclick="openSettings('module1')">⚙️ 自定义</button></div>
+    <h2>功能一：选择监管者</h2>
+    <select id="hunterSelect" onchange="selectHunter()">
+      <option value="">请选择监管者</option>
+      <option value="厂长">厂长</option>
+      <option value="宿伞之魂">宿伞之魂</option>
+      <option value="渔女">渔女</option>
+      <option value="红夫人">红夫人</option>
+      <option value="红蝶">红蝶</option>
+      <option value="噩梦">噩梦</option>
+    </select>
+    <div id="hunterInfo" class="small gray">选择监管者后将高亮技能和天赋</div>
+  </div>
+
+  <!-- 功能二：大技能冷却倒计时 -->
+  <div class="module" id="module2">
+    <div class="settings"><button onclick="openSettings('module2')">⚙️ 自定义</button></div>
+    <h2>功能二：大技能冷却倒计时</h2>
+    <div class="timer">
+      <span>全局倒计时：</span>
+      <span id="mainTimer">238</span>s
+      <button onclick="startMainTimer()">开始</button>
+      <button onclick="resetMainTimer()">重置</button>
     </div>
-    <div class="controls">
-      <select id="roleSelect" class="select">
-        <option value="">请选择监管者（示例）</option>
-        <option value="factory">厂长</option>
-        <option value="umbrella">宿伞之魂</option>
-        <option value="fisher">渔女</option>
-        <option value="woman">红夫人</option>
-        <option value="butterfly">红蝶</option>
-        <option value="nightmare">噩梦</option>
-        <option value="apostle">使徒</option>
-        <option value="fool">愚人金</option>
-      </select>
-      <button id="voiceBtn" class="btn small">语音输入</button>
-      <button id="saveBtn" class="btn small">保存配置</button>
+    <div class="small gray">到不同秒数自动播报：失常/兴奋/传送等冷却结束</div>
+  </div>
+
+  <!-- 功能三：天赋推测 -->
+  <div class="module" id="module3">
+    <div class="settings"><button onclick="openSettings('module3')">⚙️ 自定义</button></div>
+    <h2>功能三：天赋推测</h2>
+    <div class="small">点击切换概率状态：</div>
+    <div id="talents">
+      <button onclick="toggleState(this)">破坏欲</button>
+      <button onclick="toggleState(this)">幽闭恐惧</button>
+      <button onclick="toggleState(this)">追猎</button>
     </div>
   </div>
 
-  <div class="main">
-    <div class="card">
-      <div style="display:flex;justify-content:space-between;align-items:center">
-        <div><strong>重要面板（顶部会显示已确认/高概率项）</strong></div>
-        <div class="badge" id="topSummary">无项目</div>
-      </div>
+  <!-- 功能四：地图选择 -->
+  <div class="module" id="module4">
+    <div class="settings"><button onclick="openSettings('module4')">⚙️ 自定义</button></div>
+    <h2>功能四：地图与地窖</h2>
+    <select id="mapSelect">
+      <option>军工厂</option>
+      <option>圣心医院</option>
+      <option>红教堂</option>
+      <option>湖景村</option>
+    </select>
+    <div class="small gray">可在此标注地窖点为“已排除”或“已确认”</div>
+  </div>
+</div>
 
-      <div style="margin-top:10px" class="timers" id="timers">
-        <!-- Small timers for factory (example role) -->
-        <div class="timer card" id="t_factory_anger">
-          <div class="label">怨魂狱火（炭火） 总数 <span class="counter" id="angerCount">0</span></div>
-          <div class="count" id="angerTicker">0</div>
-          <div class="row">
-            <button class="btn small" id="angerStart">开始+手动计数</button>
-            <button class="btn small" id="angerDec">-1 干预</button>
-          </div>
-          <div class="row">
-            <button class="btn small" id="angerPlus">+1</button>
-            <button class="btn small" id="angerMinus">-1</button>
-            <button class="btn small" id="angerInc25">按-1后启动炭火持续 25s</button>
-          </div>
-        </div>
-
-        <div class="timer card" id="t_furnace_duration">
-          <div class="label">炭火持续时间</div>
-          <div class="count" id="furnaceTime">--</div>
-          <div class="row">
-            <button class="btn small" id="furnaceStart">开始</button>
-            <button class="btn small" id="furnaceReset">重置</button>
-          </div>
-        </div>
-
-        <div class="timer card" id="t_child1">
-          <div class="label">一娃传送冷却时间</div>
-          <div class="count" id="child1Time">--</div>
-          <div class="row">
-            <button class="btn small" id="child1Start">开始</button>
-            <button class="btn small" id="child1Reset">重置</button>
-          </div>
-        </div>
-
-        <div class="timer card" id="t_child2">
-          <div class="label">二娃传送冷却时间</div>
-          <div class="count" id="child2Time">--</div>
-          <div class="row">
-            <button class="btn small" id="child2Start">开始</button>
-            <button class="btn small" id="child2Reset">重置</button>
-          </div>
-        </div>
-
-      </div>
-
-      <hr style="border:none;border-top:1px solid rgba(255,255,255,0.03);margin:10px 0">
-
-      <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
-        <div class="card" style="padding:10px">
-          <div class="label">投降倒计时（238s）</div>
-          <div style="display:flex;gap:8px;align-items:center;margin-top:6px">
-            <div class="count" id="globalRemain">--</div>
-            <div class="custom">全局正计时 <span id="globalElapsed">00:00</span></div>
-          </div>
-          <div style="margin-top:8px" class="row">
-            <button class="btn small" id="globalStart">开始</button>
-            <button class="btn small" id="globalPause">暂停</button>
-            <button class="btn small" id="globalReset">重置</button>
-          </div>
-          <div style="margin-top:8px" class="row">
-            <button class="btn small" data-adjust="2">+2</button>
-            <button class="btn small" data-adjust="1">+1</button>
-            <button class="btn small" data-adjust="-1">-1</button>
-            <button class="btn small" data-adjust="-2">-2</button>
-          </div>
-        </div>
-
-        <div class="card" style="padding:10px;min-width:260px">
-          <div class="label">大技能冷却（与238联动）</div>
-          <div class="custom" style="margin-top:6px">当投降倒计时到达特定剩余时间将播报（有些大技能另设后续小冷却，请手动开启）</div>
-          <div style="margin-top:8px" class="states">
-            <div class="tag" data-skill="distort">失常（踹） — 播报: 到238结束</div>
-            <div class="tag" data-skill="pump">兴奋（金身） — 238结束后再启动5s/100s（手动）</div>
-            <div class="tag" data-skill="patrol">巡视者 — 在剩208s时播报</div>
-            <div class="tag" data-skill="teleport">传送 — 在剩193s时播报（另100s手动）</div>
-            <div class="tag" data-skill="flash">闪现 — 在剩178s时播报（另150s手动）</div>
-            <div class="tag" data-skill="shift">移形 — 在剩188s时播报（另30s/100s手动）</div>
-          </div>
-        </div>
-      </div>
-
-      <div style="margin-top:10px">
-        <div class="label">大技能后续冷却（示例面板）</div>
-        <div style="display:flex;gap:8px;margin-top:6px;flex-wrap:wrap">
-          <button class="btn small" data-follow="pump-5">兴奋 5s</button>
-          <button class="btn small" data-follow="pump-100">兴奋 100s</button>
-          <button class="btn small" data-follow="teleport-100">传送 100s</button>
-          <button class="btn small" data-follow="flash-150">闪现 150s</button>
-          <button class="btn small" data-follow="shift-30">移形 30s</button>
-          <button class="btn small" data-follow="shift-100">移形 100s</button>
-        </div>
-      </div>
-
-    </div>
-
-    <div class="card">
-      <div style="display:flex;justify-content:space-between;align-items:center">
-        <div><strong>最终天赋 / 小天赋 推测面板</strong></div>
-        <div class="custom">点击切换状态：无 → 低概率 → 高概率 → 已确认 → 无（循环）</div>
-      </div>
-
-      <div style="margin-top:10px;display:grid;grid-template-columns:repeat(2,1fr);gap:8px">
-        <div class="card">
-          <div class="label">破坏欲（0/3） <span id="desireCount" class="counter">0</span></div>
-          <div style="margin-top:6px" class="row">
-            <button class="btn small" id="desireInc">+1</button>
-            <button class="btn small" id="desireDec">-1</button>
-            <button class="btn small" id="desireToggle">切换状态</button>
-          </div>
-        </div>
-
-        <div class="card">
-          <div class="label">先追窗区（小房）</div>
-          <div style="margin-top:6px" class="row">
-            <button class="btn small" data-toggle="pursue">切换状态</button>
-          </div>
-        </div>
-
-        <div class="card">
-          <div class="label">困兽之斗 / 成瘾症（分别独立）</div>
-          <div style="margin-top:6px" class="row">
-            <button class="btn small" data-toggle="beast">困兽切换</button>
-            <button class="btn small" data-toggle="addict">成瘾切换</button>
-          </div>
-        </div>
-
-        <div class="card">
-          <div class="label">幽闭恐惧</div>
-          <div style="margin-top:6px" class="row">
-            <button class="btn small" data-toggle="claustro">切换状态</button>
-          </div>
-        </div>
-
-        <div class="card">
-          <div class="label">淬火（盲杖废淬火提示）</div>
-          <div style="margin-top:6px" class="row">
-            <button class="btn small" id="quenchToggle">切换（当为盲女时才播报）</button>
-          </div>
-        </div>
-
-        <div class="card">
-          <div class="label">通缉（0/3） <span id="wantedCount" class="counter">0</span></div>
-          <div style="margin-top:6px" class="row">
-            <button class="btn small" id="wantedInc">+1</button>
-            <button class="btn small" id="wantedDec">-1</button>
-          </div>
-        </div>
-
-        <div class="card">
-          <div class="label">掌控欲 / 追猎 / 狩猎本能 / 狂暴 / 嬉弄</div>
-          <div style="margin-top:6px;display:flex;flex-direction:column;gap:6px">
-            <button class="btn small" data-toggle="control">掌控欲 切换</button>
-            <button class="btn small" data-toggle="hunt">追猎 +1</button>
-            <button class="btn small" data-toggle="instinct">狩猎本能 +1</button>
-            <button class="btn small" data-toggle="frenzy">狂暴 切换</button>
-            <button class="btn small" data-toggle="tease">嬉弄 切换</button>
-          </div>
-        </div>
-
-        <div class="card">
-          <div class="label">最终天赋（可选2项为已确认）</div>
-          <div style="margin-top:6px;display:flex;gap:6px;flex-wrap:wrap">
-            <button class="btn small" data-final="confine">禁闭空间（窗户解封 20s）</button>
-            <button class="btn small" data-final="arrogant">张狂</button>
-            <button class="btn small" data-final="trump">底牌（238 到118 播报）</button>
-            <button class="btn small" data-final="hold">挽留（120s 倒计时）</button>
-          </div>
-        </div>
-
-      </div>
-
-      <div style="margin-top:8px" class="footer-note">说明：该面板为演示版，很多规则以示例形式实现。请在右上角“自定义”里调整更多行为，修改将保存在本地（localStorage）。</div>
+<!-- 自定义设置窗口 -->
+<div id="settingsModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);">
+  <div style="background:white;margin:10% auto;padding:20px;width:90%;max-width:400px;border-radius:10px;">
+    <h3>模块自定义设置</h3>
+    <textarea id="settingsInput" style="width:100%;height:100px;"></textarea>
+    <div style="text-align:right;margin-top:10px;">
+      <button onclick="saveSettings()">保存</button>
+      <button onclick="closeSettings()">关闭</button>
     </div>
   </div>
-
-  <div class="side">
-    <div class="card">
-      <div class="panel-title"><strong>地图 / 地窖点</strong><div class="custom">选择地图后查看地窖分布</div></div>
-      <select id="mapSelect" class="select" style="margin-top:8px">
-        <option value="">选择地图</option>
-        <option>军工厂</option>
-        <option>圣心医院</option>
-        <option>红教堂</option>
-        <option>湖景村</option>
-        <option>月亮河公园</option>
-        <option>里奥的回忆</option>
-        <option>永眠镇</option>
-        <option>唐人街</option>
-        <option>不归林</option>
-      </select>
-      <div class="map-list" id="mapPoints" style="margin-top:8px">
-        <!-- populated by JS -->
-      </div>
-    </div>
-
-    <div class="card">
-      <div class="panel-title"><strong>自定义板块</strong><div class="custom">可修改多数行为并保持本地</div></div>
-      <div style="margin-top:8px;display:flex;flex-direction:column;gap:6px">
-        <label><input type="checkbox" id="speechToggle" checked /> 启用语音播报</label>
-        <label><input type="checkbox" id="voiceCmdToggle" /> 启用语音输入（识别）</label>
-        <label>手机布局模式 <select id="layoutMode"><option value="compact">紧凑（顶部汇总）</option><option value="normal">默认</option></select></label>
-        <button class="btn small" id="clearStorage">恢复默认（清除本地）</button>
-      </div>
-    </div>
-
-    <div class="card">
-      <div class="panel-title"><strong>队友选择</strong><div class="custom">点选后弹出角色列表（示例）</div></div>
-      <div style="margin-top:8px">
-        <button class="btn small" id="pickTeammates">选择队友</button>
-        <div id="teammates" style="margin-top:8px;color:var(--muted)"></div>
-      </div>
-    </div>
-  </div>
-
 </div>
 
 <script>
-/* --------- 简化的实现说明 ---------
- 1) 实现了厂长示例逻辑（怨魂、炭火、两个娃、238倒计时与大技能触发）
- 2) 语音播报使用 SpeechSynthesis；语音输入使用 Web Speech API（若可用）
- 3) 自定义面板设置保存到 localStorage；若把文件上传到 GitHub，localStorage 只在当前浏览器/设备生效，不会在他人设备同步
- 4) 许多复杂的规则与UI细节做了合理简化以保证稳定与可读性；你可以基于此文件继续扩展
-*/
+let mainTimer, mainTime = 238;
+let settingsTarget = '';
 
-// helpers
-const t = (s) => document.getElementById(s);
-const speak = (text)=>{
-  if(!settings.speech) return;
-  const msg = new SpeechSynthesisUtterance(text);
-  msg.lang = 'zh-CN';
-  window.speechSynthesis.cancel(); // 简化：打断之前的
-  window.speechSynthesis.speak(msg);
+function speak(text){
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang = 'zh-CN';
+  speechSynthesis.speak(u);
 }
 
-// default settings (可扩展)
-const defaultSettings = {speech:true,voiceCmd:false,layout:'normal'};
-let settings = Object.assign({}, defaultSettings, JSON.parse(localStorage.getItem('iv_settings')||'{}'));
-// apply settings
-t('speechToggle').checked = settings.speech;
-t('voiceCmdToggle').checked = settings.voiceCmd;
-t('layoutMode').value = settings.layout;
-
-// state
-let angerCount = 0;
-let furnaceTimer = null;
-let furnaceRemain = 0;
-let furnaceRunning = false;
-let child1Remain=0, child1Timer=null, child1Running=false;
-let child2Remain=0, child2Timer=null, child2Running=false;
-let globalRemain = 238; let globalTimer=null; let globalRunning=false; let globalElapsed=0;
-let followTimers = {};
-
-// UI refs
-const angerCountEl = t('angerCount');
-const angerTickerEl = t('angerTicker');
-const furnaceTimeEl = t('furnaceTime');
-const child1TimeEl = t('child1Time');
-const child2TimeEl = t('child2Time');
-const globalRemainEl = t('globalRemain');
-const globalElapsedEl = t('globalElapsed');
-const topSummary = t('topSummary');
-
-// role selection behaviour: when choose厂长 highligth skills/talents (simple)
-const roleSelect = t('roleSelect');
-roleSelect.addEventListener('change', ()=>{
-  const v = roleSelect.value;
-  if(v==='factory'){
-    // highlight possible skills/talents: simple visual by adding class
-    document.querySelectorAll('[data-skill]').forEach(el=>el.classList.add('highlight'));
-    speak('已选择监管：厂长，相关技能与天赋已标注为高概率');
-    updateTopSummary('厂长：高概率技能已标注');
-  } else {
-    document.querySelectorAll('[data-skill]').forEach(el=>el.classList.remove('highlight'));
-    updateTopSummary('无项目');
-  }
-});
-
-function updateTopSummary(text){ topSummary.textContent = text; }
-
-// 怨魂计数
-t('angerPlus').addEventListener('click', ()=>{ angerCount++; renderAnger(); speak('怨魂狱火 +1，当前总数 '+angerCount); });
-t('angerMinus').addEventListener('click', ()=>{ angerCount = Math.max(0, angerCount-1); renderAnger(); speak('怨魂狱火 -1，当前总数 '+angerCount); });
-
-t('angerStart').addEventListener('click', ()=>{
-  // 定时每30s +1
-  if(angerTickerEl.dataset.run==='1'){ // stop
-    angerTickerEl.dataset.run='0'; t('angerStart').textContent='开始+手动计数';
-    if(angerTickerEl._interval) clearInterval(angerTickerEl._interval);
-    return;
-  }
-  angerTickerEl.dataset.run='1'; t('angerStart').textContent='停止自动计数';
-  angerTickerEl._interval = setInterval(()=>{ angerCount++; renderAnger(); speak('怨魂狱火 +1，当前总数 '+angerCount); }, 30000);
-});
-
-t('angerDec').addEventListener('click', ()=>{
-  // 按下一次-1并启动25s炭火持续倒计时
-  angerCount = Math.max(0, angerCount-1); renderAnger(); startFurnace(25); speak('已手动减少1，启动炭火持续 25 秒');
-});
-
-function renderAnger(){ angerCountEl.textContent = angerCount; angerTickerEl.textContent = angerCount; }
-
-// 炭火持续计时
-function startFurnace(sec=25){ furnaceRemain = sec; furnaceRunning = true; updateFurnaceUI(); if(furnaceTimer) clearInterval(furnaceTimer);
-  furnaceTimer = setInterval(()=>{
-    furnaceRemain--; updateFurnaceUI();
-    if(furnaceRemain<=0){ clearInterval(furnaceTimer); furnaceRunning=false; furnaceRemain=0; updateFurnaceUI(); speak('炭火持续结束'); }
+function startMainTimer(){
+  clearInterval(mainTimer);
+  let time = mainTime;
+  mainTimer = setInterval(()=>{
+    document.getElementById('mainTimer').textContent = time;
+    if(time===208) speak('巡视者冷却结束');
+    if(time===193) speak('传送冷却结束');
+    if(time===178) speak('闪现冷却结束');
+    if(time===188) speak('移形冷却结束');
+    if(time===118) speak('底牌冷却结束');
+    if(time<=0){clearInterval(mainTimer);speak('倒计时结束');}
+    time--;
   },1000);
 }
-function updateFurnaceUI(){ furnaceTimeEl.textContent = furnaceRunning? formatSec(furnaceRemain) : '--'; }
 
-t('furnaceStart').addEventListener('click', ()=> startFurnace(25));
-t('furnaceReset').addEventListener('click', ()=>{ if(furnaceTimer) clearInterval(furnaceTimer); furnaceRemain=0; furnaceRunning=false; updateFurnaceUI(); });
-
-// child timers 20s
-function startChild1(){ child1Remain=20; child1Running=true; updateChild1UI(); if(child1Timer) clearInterval(child1Timer); child1Timer=setInterval(()=>{ child1Remain--; updateChild1UI(); if(child1Remain<=0){ clearInterval(child1Timer); child1Running=false; child1Remain=0; updateChild1UI(); speak('一娃传送冷却结束'); } },1000);} 
-function updateChild1UI(){ child1TimeEl.textContent = child1Running?formatSec(child1Remain):'--'; }
-
-t('child1Start').addEventListener('click', startChild1);
-t('child1Reset').addEventListener('click', ()=>{ if(child1Timer) clearInterval(child1Timer); child1Remain=0; child1Running=false; updateChild1UI(); });
-
-function startChild2(){ child2Remain=20; child2Running=true; updateChild2UI(); if(child2Timer) clearInterval(child2Timer); child2Timer=setInterval(()=>{ child2Remain--; updateChild2UI(); if(child2Remain<=0){ clearInterval(child2Timer); child2Running=false; child2Remain=0; updateChild2UI(); speak('二娃传送冷却结束'); } },1000);} 
-function updateChild2UI(){ child2TimeEl.textContent = child2Running?formatSec(child2Remain):'--'; }
-
-t('child2Start').addEventListener('click', startChild2);
-t('child2Reset').addEventListener('click', ()=>{ if(child2Timer) clearInterval(child2Timer); child2Remain=0; child2Running=false; updateChild2UI(); });
-
-// Global 238 timer
-function formatSec(s){ if(s<0) s=0; const mm = Math.floor(s/60); const ss = s%60; return String(mm).padStart(2,'0')+':'+String(ss).padStart(2,'0'); }
-
-function startGlobal(){ if(globalRunning) return; globalRunning=true; if(globalTimer) clearInterval(globalTimer); globalTimer = setInterval(()=>{ globalRemain--; globalElapsed++; renderGlobal(); checkGlobalTriggers(); if(globalRemain<=0){ clearInterval(globalTimer); globalRunning=false; speak('投降倒计时结束'); } },1000);} 
-function pauseGlobal(){ if(globalTimer) clearInterval(globalTimer); globalRunning=false; }
-function resetGlobal(){ if(globalTimer) clearInterval(globalTimer); globalRemain=238; globalElapsed=0; globalRunning=false; renderGlobal(); }
-
-function renderGlobal(){ globalRemainEl.textContent = formatSec(globalRemain); globalElapsedEl.textContent = formatSec(globalElapsed); }
-
-// adjust buttons
-document.querySelectorAll('[data-adjust]').forEach(b=>b.addEventListener('click', (e)=>{
-  const v = parseInt(e.currentTarget.dataset.adjust,10); globalRemain = Math.max(0, globalRemain + v); renderGlobal(); speak('已调整投降倒计时 '+(v>0?'+':'')+v+' 秒，当前剩余 '+formatSec(globalRemain));
-}));
-
-t('globalStart').addEventListener('click', ()=>{ startGlobal(); speak('投降倒计时开始'); });
-t('globalPause').addEventListener('click', ()=>{ pauseGlobal(); speak('投降倒计时已暂停'); });
-t('globalReset').addEventListener('click', ()=>{ resetGlobal(); speak('投降倒计时已重置'); });
-
-// global triggers mapping (when remaining reaches value)
-const globalTriggers = [
-  {when:0, text:'失常冷却结束'},
-  {when:0, text:'兴奋冷却结束', after:{name:'pump', note:'需手动启动5s/100s'}},
-  {when:208, text:'巡视者冷却结束'},
-  {when:193, text:'传送冷却结束'},
-  {when:178, text:'闪现冷却结束'},
-  {when:188, text:'移形冷却结束'}
-];
-let firedTriggers = new Set();
-function checkGlobalTriggers(){ globalTriggers.forEach(g=>{
-  if(globalRemain===g.when && !firedTriggers.has(g.text)){
-    firedTriggers.add(g.text);
-    speak(g.text);
-    // special: if trigger is 移形（shift），也说移形持续结束 "移形持续结束" 当其另有持续计时时
-    if(g.text.includes('移形')){
-      // do not double-speak: speak only once
-      // if there is a follow timer named shift-30, do nothing else here (follow timer will announce end)
-    }
-  }
-}); }
-
-// follow-up timers
-document.querySelectorAll('[data-follow]').forEach(btn=>btn.addEventListener('click', (e)=>{
-  const id = e.currentTarget.dataset.follow; const [name,sec] = id.split('-'); startFollow(id, parseInt(sec,10));
-}));
-
-function startFollow(id, sec){ if(followTimers[id]){ clearInterval(followTimers[id].timer); }
-  let remain = sec; const elKey = 'follow_'+id; speak('已启动 '+id+' 倒计时 '+sec+' 秒');
-  followTimers[id] = {remain, timer: setInterval(()=>{ followTimers[id].remain--; if(followTimers[id].remain<=0){ clearInterval(followTimers[id].timer); speak(id+' 冷却结束'); delete followTimers[id]; } },1000)};
+function resetMainTimer(){
+  clearInterval(mainTimer);
+  document.getElementById('mainTimer').textContent = mainTime;
 }
 
-// simple toggles for small talents: cycle through none->low->high->confirm
-function cycleState(el){ const states = ['none','low','high','confirm']; let s = el.dataset.state||'none'; let i = states.indexOf(s); i=(i+1)%states.length; el.dataset.state = states[i]; renderState(el); }
-function renderState(el){ const st = el.dataset.state||'none'; el.style.opacity = st==='none'?0.45:1; if(st==='low'){ el.style.borderColor='rgba(255,255,255,0.06)'; el.textContent = el.getAttribute('data-label')+'（低概率）'; }
-  else if(st==='high'){ el.style.borderColor='rgba(255,209,102,0.18)'; el.textContent = el.getAttribute('data-label')+'（高概率）'; }
-  else if(st==='confirm'){ el.style.borderColor='rgba(95,206,123,0.2)'; el.textContent = el.getAttribute('data-label')+'（已确认）'; }
-  else { el.style.borderColor=''; el.textContent = el.getAttribute('data-label') }
+function selectHunter(){
+  const val = document.getElementById('hunterSelect').value;
+  document.getElementById('hunterInfo').textContent = val ? '已选择：'+val+'，技能与天赋已高亮' : '请选择监管者';
+  if(val) speak('已选择监管者' + val);
 }
 
-document.querySelectorAll('[data-toggle]').forEach(btn=>btn.addEventListener('click', (e)=>{ const key = e.currentTarget.dataset.toggle; cycleState(e.currentTarget); speak('已切换 '+key); }));
-
-document.querySelectorAll('[data-final]').forEach(btn=>btn.addEventListener('click', (e)=>{
-  const id = e.currentTarget.dataset.final;
-  // mark as confirmed toggle
-  e.currentTarget.dataset.state = e.currentTarget.dataset.state==='confirm'?'none':'confirm';
-  renderState(e.currentTarget);
-  // when confine confirmed, also start a 20s window-unseal timer
-  if(id==='confine' && e.currentTarget.dataset.state==='confirm'){
-    startFollow('confine-20',20);
-    speak('禁闭空间已标记为已确认，窗户解封倒计时 20 秒 已启动');
-  }
-}));
-
-// counters (破坏欲/通缉)
-let desire = 0, wanted = 0;
-function renderDesire(){ t('desireCount').textContent = desire; }
-function renderWanted(){ t('wantedCount').textContent = wanted; }
-
-t('desireInc').addEventListener('click', ()=>{ desire = Math.min(3,desire+1); renderDesire(); speak('破坏欲 '+desire+'/3'); });
-t('desireDec').addEventListener('click', ()=>{ desire = Math.max(0,desire-1); renderDesire(); });
-
-t('wantedInc').addEventListener('click', ()=>{ wanted = Math.min(3,wanted+1); renderWanted(); speak('通缉 '+wanted+'/3'); });
-t('wantedDec').addEventListener('click', ()=>{ wanted = Math.max(0,wanted-1); renderWanted(); });
-
-// map points simple demo
-const mapPointsData = {
-  '军工厂':['地窖A','地窖B','地窖C'], '圣心医院':['地窖1','地窖2'], '红教堂':['地窖X','地窖Y','地窖Z'],
-  '湖景村':['地窖L1','地窖L2','地窖L3','地窖L4']
-};
-
-t('mapSelect').addEventListener('change', (e)=>{
-  const v = e.target.value; const container = t('mapPoints'); container.innerHTML=''; (mapPointsData[v]||[]).forEach(p=>{
-    const div = document.createElement('div'); div.className='map-item'; div.innerHTML = `<div>${p}</div><div><button class='btn small' data-point='exclude'>已排除</button><button class='btn small' data-point='confirm'>已确认</button></div>`;
-    container.appendChild(div);
-    div.querySelectorAll('button').forEach(b=>b.addEventListener('click', ()=>{
-      if(b.dataset.point==='exclude'){ div.style.opacity=0.35; speak(p+' 已标记为已排除'); }
-      else{ container.querySelectorAll('.map-item').forEach(ii=>ii.style.opacity=0.35); div.style.opacity=1; speak(p+' 已标记为已确认'); }
-    }));
-  });
-});
-
-// teammates selection (simple prompt)
-t('pickTeammates').addEventListener('click', ()=>{
-  const names = prompt('输入队友角色，用逗号分隔（示例：医师,祭司）'); if(!names) return; t('teammates').textContent = names; localStorage.setItem('iv_teammates', names); speak('已记录队友：'+names);
-});
-if(localStorage.getItem('iv_teammates')) t('teammates').textContent = localStorage.getItem('iv_teammates');
-
-// persistence save
-t('saveBtn').addEventListener('click', ()=>{ settings.speech=t('speechToggle').checked; settings.voiceCmd=t('voiceCmdToggle').checked; settings.layout=t('layoutMode').value; localStorage.setItem('iv_settings', JSON.stringify(settings)); speak('设置已保存到本地'); });
-
-t('clearStorage').addEventListener('click', ()=>{ if(confirm('确认清除本地保存并恢复默认？')){ localStorage.clear(); location.reload(); } });
-
-// voice input (small example)
-let recognition=null;
-if('webkitSpeechRecognition' in window || 'SpeechRecognition' in window){ const R = window.SpeechRecognition || window.webkitSpeechRecognition; recognition = new R(); recognition.lang='zh-CN'; recognition.interimResults=false; recognition.onresult = (e)=>{ const txt = e.results[0][0].transcript; handleVoiceCmd(txt); }
-  recognition.onend = ()=>{ t('voiceBtn').textContent='语音输入'; }
+function toggleState(btn){
+  const states = ['','高概率','低概率','已确认'];
+  let current = btn.dataset.state ? parseInt(btn.dataset.state) : 0;
+  current = (current+1)%4;
+  btn.dataset.state = current;
+  btn.className = current===1?'highlight':current===2?'gray':current===3?'highlight':'';
+  btn.textContent = btn.textContent.split(' ')[0] + (states[current] ? '（'+states[current]+'）' : '');
 }
 
-t('voiceBtn').addEventListener('click', ()=>{
-  if(!recognition){ alert('当前浏览器不支持语音识别（需 Chrome/Edge/支持webkitSpeechRecognition）'); return; }
-  try{ recognition.start(); t('voiceBtn').textContent='请说话...'; }catch(e){ console.warn(e); }
-});
-
-function handleVoiceCmd(txt){ speak('识别到语音：'+txt);
-  const low = txt.toLowerCase();
-  // 简单命令解析
-  if(low.includes('开始 投降')||low.includes('开始 倒计时')){ startGlobal(); }
-  if(low.includes('暂停 投降')||low.includes('暂停 倒计时')){ pauseGlobal(); }
-  if(low.includes('炭火') && low.includes('开始')){ startFurnace(25); }
-  if(low.includes('一娃') && low.includes('开始')){ startChild1(); }
-  if(low.includes('二娃') && low.includes('开始')){ startChild2(); }
+function openSettings(id){
+  settingsTarget = id;
+  const data = localStorage.getItem(id+'_custom') || '';
+  document.getElementById('settingsInput').value = data;
+  document.getElementById('settingsModal').style.display='block';
 }
 
-// apply settings toggles
-t('speechToggle').addEventListener('change', (e)=>{ settings.speech = e.target.checked; localStorage.setItem('iv_settings', JSON.stringify(settings)); });
+function closeSettings(){
+  document.getElementById('settingsModal').style.display='none';
+}
 
-t('voiceCmdToggle').addEventListener('change', (e)=>{ settings.voiceCmd = e.target.checked; localStorage.setItem('iv_settings', JSON.stringify(settings)); });
-
-t('layoutMode').addEventListener('change', (e)=>{ settings.layout = e.target.value; localStorage.setItem('iv_settings', JSON.stringify(settings)); });
-
-// quench toggle (盲杖废淬火) — speak only once and only if role is blind girl (we'll use 'woman' as 红夫人示例)
-let quenchState=false;
-function quenchToggle(){ quenchState = !quenchState; t('quenchToggle').textContent = quenchState? '已启用':'已禁用'; }
-
-t('quenchToggle').addEventListener('click', ()=>{ quenchToggle(); speak('淬火提示已切换'); });
-
-// init render
-renderAnger(); updateFurnaceUI(); updateChild1UI(); updateChild2UI(); renderGlobal(); renderDesire(); renderWanted();
-
-// final note about persistence & GitHub
-// 当你把此html文件上传至 GitHub 并从不同设备打开：
-// - localStorage 是保存在浏览器单机的，本地修改不会自动同步到其他设备；
-// - 若你想同步，需要后端或把配置导出/导入为 json。下面提供导出功能（简化）
-
-document.getElementById('saveBtn').addEventListener('click', ()=>{ localStorage.setItem('iv_settings', JSON.stringify(settings)); alert('设置已保存到本地（localStorage）'); });
-
-// small export/import
-window.exportConfig = ()=>{ const cfg = {settings,teammates:localStorage.getItem('iv_teammates')||'',desire,wanted,angerCount}; const blob=new Blob([JSON.stringify(cfg, null, 2)],{type:'application/json'}); const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download='iv-config.json'; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url); };
-
-// bind a simple key (E) to export for convenience
-window.addEventListener('keydown',(e)=>{ if(e.key.toLowerCase()==='e'&&e.ctrlKey){ exportConfig(); alert('已导出配置文件'); }});
-
+function saveSettings(){
+  const val = document.getElementById('settingsInput').value;
+  localStorage.setItem(settingsTarget+'_custom', val);
+  closeSettings();
+  alert('设置已保存，下次打开会自动加载');
+}
 </script>
 </body>
 </html>
